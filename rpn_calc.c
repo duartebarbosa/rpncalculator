@@ -1,55 +1,57 @@
-/* RPN Calculator - Static Stack based version - rpn_calc.c dsrb@Skywalker IST-TP LEIC n.º 65893  - 2010 */
+/*
+*	RPN Calculator - Static Stack version
+*		Duarte Barbosa
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define SIZE 80
-#define max_line_size 128
+#define LINE_SIZE 128
 
-int stack[SIZE] = {0}, *top = stack, *p1 = stack, flag_over_under; 	/* top points to the top of stack */
-char line[max_line_size];
+int stack[SIZE] = {0}, *base = stack + 1, *top = stack, under_or_overflow; 	/* base points to the base of stack + 1 (prevention for underflows) */
+char line[LINE_SIZE];
 
 void push(int i){
-	p1++;
-
-	if(p1 == (top + SIZE)) {
+	if(top == (base + SIZE)) {
 		printf("Stack Overflow.\n");
-		flag_over_under = 1;
+		under_or_overflow = 1;
 	}
-	*p1 = i;
+	else {
+		top++;
+		*top = i;
+	}
 }
 
 void pop(void){
-	*p1 = 0;
-	if(p1 == top) {
+	if(top == base) {
 		printf("Stack Underflow.\n");
-		flag_over_under = 1;
+		under_or_overflow = 1;
 	}
-	p1--;
+	else
+		top--;
 }
 
 int main(){
 
-	int input, eof, flag = 1;
-	int * p2;
-	char *corte;
-
-	top++;
+	int input, eof, insuf_args = 1;
+	int *previous;
+	char *token;
 
 	printf("RPN Calculator - Enter the expression to evaluate or Ctrl-D (EOF) to quit.\n");
 
 prompt:
-	for(; fgets(line, max_line_size, stdin)!= NULL; flag = 1, p1 = stack) {
+	for(; fgets(line, LINE_SIZE, stdin)!= NULL; insuf_args = 1, top = stack) {
 		line[strlen(line) - 1] = '\0';
-		corte = strtok (line, " " "\t");
-		if(corte == NULL) {
+		token = strtok (line, " " "\t");
+		if(token == NULL) {
 			continue;
 		}
 
-		p2 = p1;
+		previous = top;
 
-		eof = sscanf(corte, "%d", &input);
+		eof = sscanf(token, "%d", &input);	/* eof = 1 means there was a number in the token */
 
 		if(eof)
 			push(input);
@@ -58,47 +60,49 @@ prompt:
 			goto prompt;
 		}
 
-		while ((corte = strtok (NULL, " " "\t")) != NULL) {
-			eof = sscanf(corte, "%d", &input);
+		while ((token = strtok (NULL, " " "\t")) != NULL) {
+			eof = sscanf(token, "%d", &input);
 
 			if(eof){
-				flag = 0;
-				p2 = p1;
+				insuf_args = 0;
+				previous = top;
 				push(input);
 			}
 			else{
-				if (!(strcmp (corte, "+")))
-					*p2 += *p1;
-				else if (!(strcmp (corte, "-")))
-					*p2 -= *p1;
-				else if (!(strcmp (corte, "*")))
-					*p2 *= *p1;
-				else if (!(strcmp (corte, "/"))){
-					if(*p1)
-						*p2 /= *p1;
+				if (!(strcmp (token, "+")))
+					*previous += *top;
+				else if (!(strcmp (token, "-")))
+					*previous -= *top;
+				else if (!(strcmp (token, "*")))
+					*previous *= *top;
+				else if (!(strcmp (token, "/"))){
+					if(*top)
+						*previous /= *top;
 					else{
 						printf("Division by Zero!\n");
 						goto prompt;
 					}
 				}
 				else{
-					printf("Kernel Panic!\n");
+					printf("Wrong Operand!\n");
 					goto prompt;
 				}
 				pop();
-				if(p2 != top)
-					p2--;
+				if(previous != base)
+					previous--;
 			}
 		}
 
-		if(flag)
+		if(insuf_args)
 			printf("Insuficient Arguments!\n");
-		else if(p2 != top || p1 != p2)
+		else if(previous != base || top != previous)
 			printf("Missing Operands!\n");
-		else if(flag_over_under)
+		else if(under_or_overflow){
+			under_or_overflow = 0;
 			goto prompt;
+		}
 		else
-			printf("Result : %d\n", *p2);
+			printf("Result : %d\n", *previous);
 	}
 
 	return 0;
