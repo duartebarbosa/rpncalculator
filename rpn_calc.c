@@ -42,13 +42,10 @@ int main(){
 
 prompt:
 	for(; fgets(line, LINE_SIZE, stdin)!= NULL; insuf_args = 1, top = stack) {
-		line[strlen(line) - 1] = '\0';
-		token = strtok (line, " " "\t");
-		if(token == NULL) {
+		line[strlen(line) - 1] = '\0';		/* cut the \n from the string */
+		if((token = strtok (line, " " "\t")) == NULL) {
 			continue;
 		}
-
-		previous = top;
 
 		eof = sscanf(token, "%d", &input);	/* eof = 1 means there was a number in the token */
 
