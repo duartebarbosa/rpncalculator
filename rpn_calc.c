@@ -10,7 +10,7 @@
 #define SIZE 80
 #define LINE_SIZE 128
 
-int stack[SIZE] = {0}, *base = stack + 1, *top = stack, under_or_overflow; 	/* base points to the base of stack + 1 (prevention for underflows) */
+int stack[SIZE] = {0}, *base = stack + 1, *top = stack, under_or_overflow; 	/* base points to the base of stack + 1 (just a hack for making push() simpler) */
 char line[LINE_SIZE];
 
 void push(int i){
@@ -39,7 +39,7 @@ int main(){
 	int *previous;
 	char *token;
 
-	printf("RPN Calculator - Enter the expression to evaluate or Ctrl-D (EOF) to quit.\n");
+	printf("RPN Calculator - Enter the expression to evaluate or Ctrl-D to quit.\n");
 
 prompt:
 	for(; fgets(line, LINE_SIZE, stdin)!= NULL; insuf_args = 1, top = stack) {
@@ -69,38 +69,36 @@ prompt:
 				push(input);
 			}
 			else{
-				if (!(strcmp (token, "+")))
-					*previous += *top;
-				else if (!(strcmp (token, "-")))
-					*previous -= *top;
-				else if (!(strcmp (token, "*")))
-					*previous *= *top;
-				else if (!(strcmp (token, "/"))){
-					if(*top)
-						*previous /= *top;
+				if(!insuf_args){
+					if (!(strcmp (token, "+")))
+						*previous += *top;
+					else if (!(strcmp (token, "-")))
+						*previous -= *top;
+					else if (!(strcmp (token, "*")))
+						*previous *= *top;
+					else if (!(strcmp (token, "/"))){
+						if(*top)
+							*previous /= *top;
+						else{
+							printf("Division by Zero!\n");
+							goto prompt;
+						}
+					}
 					else{
-						printf("Division by Zero!\n");
+						printf("Wrong Operand!\n");
 						goto prompt;
 					}
+					pop();
+					if(previous != base)
+						previous--;
 				}
-				else{
-					printf("Wrong Operand!\n");
-					goto prompt;
-				}
-				pop();
-				if(previous != base)
-					previous--;
 			}
 		}
 
-		if(insuf_args)
-			printf("Insuficient Arguments!\n");
-		else if(previous != base || top != previous)
-			printf("Missing Operands!\n");
-		else if(under_or_overflow){
+		if(insuf_args || previous != base || top != previous)
+			printf("Malformed Expression!\n");
+		else if(under_or_overflow)
 			under_or_overflow = 0;
-			goto prompt;
-		}
 		else
 			printf("Result : %d\n", *previous);
 	}
