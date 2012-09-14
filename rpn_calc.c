@@ -84,7 +84,7 @@ prompt:
 						}
 					}
 					else{
-						printf("Wrong Operand!\n");
+						printf("Wrong Operator!\n");
 						goto prompt;
 					}
 					pop();
